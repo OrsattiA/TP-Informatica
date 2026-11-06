@@ -53,7 +53,7 @@ void buscarCancion(FILE *canciones, int codigoCancionBuscado)
     
 }
 
-void desplegarMenu(FILE *canciones)
+void desplegarMenu(FILE *canciones, FILE *reproducciones)
 {
     int opcionElegida = -1; //Empieza en un valor que sabemos que no puede tomar
 
@@ -82,34 +82,17 @@ void desplegarMenu(FILE *canciones)
                 //
         }
     }
-    
-
-
-    
-
-
-
-
-
 }
 
-
-
-
-
-
 int main(){
-    //
-    //1. Leer archivo
+    //1. Leer reproducciones
     //2. Obtener todos los datos y escribirlos en un archivo nuestro
     //3. Cerrar el archivo
     //4. Mostrar el menú
 
-    //Anotaciones:
-    //  -Leer todo y sacar la mayor cantidad de datos antes de desplegar al menu. Es mejor un tiempo de inicio más alto,y despues más fluida la performance.
     FILE *canciones = NULL;
-    FILE *reproducciones;
-    desplegarMenu(canciones); //verificar si no tengo que usar &canciones
+    FILE *reproducciones = NULL;
+    desplegarMenu(canciones, reproducciones);
 
     if(canciones != NULL) //Si el archivo nunca se abrio, no debe de ser cerrado.
     {
