@@ -76,7 +76,7 @@ void buscarCancion(FILE *canciones, int codigoCancionBuscado)
             seEncontroCancion = 1;
         }
     }
-    
+
     //Se podría separar la parte de la búsqueda de la de mostrar. (Haciendo algo como char tituloEncontrado[21] y que cuando lo encuentre guarde su titulo)
     if(seEncontroCancion == 0) //si no se encontró:  
     {
@@ -86,10 +86,66 @@ void buscarCancion(FILE *canciones, int codigoCancionBuscado)
     }
 }
 
+void mostrarPorcentajeReproduccionesAbandonadas(float porcentajeRepAbandonadas)
+{
+    /*
+    Proposito: Imprime en pantalla, si hay, el porcentaje de reproducciones abandonadas, y si no, lo informa.
+    */
+
+    if(porcentajeRepAbandonadas == -1)
+    {
+        printf("---------------------------------------------------------------------------------------------------\n");
+        printf("El archivo no posee reproducciones almacenadas en el.\n");
+        printf("---------------------------------------------------------------------------------------------------");
+    }
+    else
+    {
+        printf("---------------------------------------------------------------------------------------------------\n");
+        printf("El porcentaje de reproducciones abandonadas es de: %% %f\n", porcentajeRepAbandonadas);
+        printf("---------------------------------------------------------------------------------------------------");
+    }
+}
+
+float calcularPorcentajeAbandonadas(FILE *reproducciones)
+{
+    /*
+    Propósito: Recorre reproducciones_cn.txt, contabiliza la cantidad de reproducciones y de reproducciones abandonadas, y devuelve el porcentaje.
+    */
+
+    reproducciones = fopen("reproducciones_cn.txt", "r"); //abrimos el archivo
+    int codigoCancion;
+    char pais[3];
+    int dia, mes, segundosEscuchados;
+    char dispositivo;
+
+    int cancionesTotales = 0, reproduccionesAbandonadas = 0;
+
+    while(!feof(reproducciones))
+    {
+        fscanf(reproducciones, " %d %s %d %d %d %c", &codigoCancion, pais, &dia, &mes, &segundosEscuchados, &dispositivo);
+        if(segundosEscuchados < 30) //Las reproducciones consideradas abandonadas son aquellas que duran menos de 30 segundos.
+        {
+            reproduccionesAbandonadas++;
+        }
+        cancionesTotales++;
+    }
+
+    cancionesTotales--; //Esto es porque cuenta a la última linea como una canción (cuando es solo un \0) entonces la decrementamos en 1.
+
+    fclose(reproducciones); //En un futuro, lo optimo sería abrir el archivo reproducciones.txt 1 sola vez y leerlo entero para completar todos los enunciados.
+
+    if(cancionesTotales == 0)
+    {
+        return -1; //indica que no tiene canciones
+    }
+    else
+    {
+        return (reproduccionesAbandonadas * 1.0 / cancionesTotales * 1.0) * 100; //devuelve el porcentaje
+    }
+}
+
 void desplegarMenu(FILE *canciones, FILE *reproducciones)
 {
-    reproducciones = fopen("reproducciones_cn.txt", "r"); // IGNORAR. ES PARA QUE ANDE EL PROGRAMA POR AHORA, HASTA QUE HAGAMOS LA 2.
-    fclose(reproducciones); // IGNORAR. ES PARA QUE ANDE EL PROGRAMA POR AHORA, HASTA QUE HAGAMOS LA 2.
     int opcionElegida;
 
     mostrarOpciones(); //Primero mostramos las opciones
@@ -109,7 +165,8 @@ void desplegarMenu(FILE *canciones, FILE *reproducciones)
             }
             case 2:
             {
-                //IMPLEMENTAR Caso 2
+                float porcentajeRepAbandonadas = calcularPorcentajeAbandonadas(reproducciones);
+                mostrarPorcentajeReproduccionesAbandonadas(porcentajeRepAbandonadas);
                 break;
             }
             case 3:
@@ -117,8 +174,9 @@ void desplegarMenu(FILE *canciones, FILE *reproducciones)
                 break;
             }
         }
-        mostrarOpciones();
-        pedirOpcion(&opcionElegida);
+
+        mostrarOpciones(); //Escribir
+        pedirOpcion(&opcionElegida); //Leer (garantizamos que se pueda salir del bucle).
     }
 }
 
@@ -131,6 +189,7 @@ int main(){
         -Hice la validación de la opción elegida como una subrutina propia.
         -Adapté al pedir opciones al estándar de informática.
         -Hice que la muestra de las opciones y el pedido de las opciones sean sus propias subrutinas.
+        -Hice el ejercicio 2.
     */
 
     FILE *canciones = NULL;
