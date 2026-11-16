@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 
+//----------FUNCIONES ENUNCIADO 1----------
+
 void pedirCodigoCancion(int *codigoCancionBuscado) //se pide el parámetro con el * por 2 razones: 1, solo las subrutinas pueden interactuar con el usuario. Y 2, C asi lo requiere.
 {
     /*
@@ -144,29 +146,30 @@ float calcularPorcentajeAbandonadas(FILE *reproducciones)
     }
 }
 
-void desplegarMenu(FILE *canciones, FILE *reproducciones)
+void MENU(char codigoCancion[400][6], char titulo[400][21], char artista[400][21], char genero[400], int duracion[400], int reproduccionesValidas[400])
 {
     int opcionElegida;
 
     mostrarOpciones(); //Primero mostramos las opciones
     pedirOpcion(&opcionElegida); //Despues pedimos y validamos. 
-    //Lo hacemos de la misma forma que lo venimos haciendo en informática. Primero pedimos, despues entramos al bucle, y finalmente volvemos a pedir.
     
-    while(opcionElegida != 3) //Repetir mientras
+    while(opcionElegida != 3) //Repetir mientras <> 3 (el usuario no quiera salir)
     { 
         switch(opcionElegida) //Segun sea
         {
             case 1: 
             {
+                
                 int codigoCancionBuscado;
                 pedirCodigoCancion(&codigoCancionBuscado); //La subrutina pedirCodigoCancion interactua con el usuario, y guarda eso en codigoCancionBuscado.
-                buscarCancion(canciones, codigoCancionBuscado);
+                //buscarCancion(canciones, codigoCancionBuscado); ADAPTAR AL NUEVO FORMATO
                 break;
+                
             }
             case 2:
             {
-                float porcentajeRepAbandonadas = calcularPorcentajeAbandonadas(reproducciones);
-                mostrarPorcentajeReproduccionesAbandonadas(porcentajeRepAbandonadas);
+                //float porcentajeRepAbandonadas = calcularPorcentajeAbandonadas(reproducciones); ADAPTAR AL NUEVO FORMATO
+                //mostrarPorcentajeReproduccionesAbandonadas(porcentajeRepAbandonadas); ADAPTAR AL NUEVO FORMATO
                 break;
             }
             case 3:
@@ -180,26 +183,112 @@ void desplegarMenu(FILE *canciones, FILE *reproducciones)
     }
 }
 
-int main(){
+//----------FUNCIONES ENUNCIADO 2----------
+
+void cargarCanciones(char codigoCancion[400][6], char titulo[400][21], char artista[400][21], char genero[400], int duracion[400])
+{
     /*
-    Cambios:
-        -Borré seaValida()
-        -Corregí las boludeces que pedía C para que nos ande el código a todos bien.
-        -Hice que pedirCodigoCancion sea una subrutina que interactue con el usuario, y no una función.
-        -Hice la validación de la opción elegida como una subrutina propia.
-        -Adapté al pedir opciones al estándar de informática.
-        -Hice que la muestra de las opciones y el pedido de las opciones sean sus propias subrutinas.
-        -Hice el ejercicio 2.
+    Proposito: Lee el archivo canciones.txt, y devuelve, por referencia, los arreglos con los respectivos datos cargados.
+    */
+    FILE *canciones;
+    canciones = fopen("canciones.txt", "r"); //abrimos canciones.txt y obtenemos la información útil
+    int i = 0;
+
+    while(!feof(canciones))
+    {
+        fscanf(canciones, "%s %s %s %c %d", codigoCancion[i], titulo[i], artista[i], &genero[i], &duracion[i]);
+        i++;
+    }
+
+    fclose(canciones); //cerramos canciones.txt
+}
+
+void cargarReproduccionesValidas(char codigoCancion[400][6], int reproduccionesValidas[400])
+{
+    /*
+    Proposito: Lee el archivo reproducciones.txt, y devuelve, por referencia, el arreglo reproduccionesValidas con los respectivos datos cargados.
+    */
+    FILE *reproducciones;
+    reproducciones = fopen("reproducciones.txt", "r");
+    char codigoCancionReproduccion[6]; //5 caracteres mas \0
+    char codigoPaisReproduccion[3];
+    int diaReproduccion;
+    int mesReproduccion;
+    int segundosEscuchados;
+    char dispositivoReproduccion;
+
+    while(!feof(reproducciones))
+    {
+        fscanf(reproducciones, "%s %s %d %d %d %c", codigoCancionReproduccion, codigoPaisReproduccion, &diaReproduccion, &mesReproduccion, &segundosEscuchados, &dispositivoReproduccion);
+
+        if(segundosEscuchados >= 30) //Si es una reproduccion válida
+        {
+            int i = 0;
+            while(strcmp(codigoCancionReproduccion, codigoCancion[i]) != 0)
+            {   
+                i++; //Buscas la cancion a la que pertenece la reproduccion, mediante ver en qué indice está en códigoCancion
+            }
+            reproduccionesValidas[i]++; //Sumas una reproduccion válida
+        }
+    }
+
+    fclose(reproducciones);
+}
+
+void CARGA(char codigoCancion[400][6], char titulo[400][21], char artista[400][21], char genero[400], int duracion[400], int reproduccionesValidas[400])
+{
+    /*
+    Propósito: Lee los archivos 1 vez y recopila, a través de arreglos apareados, todos los datos necesarios para la resolución del problema.
     */
 
-    FILE *canciones = NULL;
-    FILE *reproducciones = NULL;
-    desplegarMenu(canciones, reproducciones);
+    cargarCanciones(codigoCancion, titulo, artista, genero, duracion); 
+    //Cargas, a traves de una subrutina auxiliar, cada uno de los codigos, titulos, artista, genero y duracion de todas las canciones
 
-    if(canciones != NULL) //Si el archivo nunca se abrio, no debe de ser cerrado.
+    for(int i = 0; i < 400; i++)
     {
-        fclose(canciones);
+        reproduccionesValidas[i] = 0;
+        //Inicializamos en 0 todo el arreglo que contiene las reproducciones validas, porque puede ser que haya canciones que no tengan reproducciones válidas.
     }
+
+    cargarReproduccionesValidas(codigoCancion, reproduccionesValidas);
+    //Cargas, a traves de una subrutina auxiliar, las reproducciones validas de cada cancion en el indice respectivo.
+}
+
+int main(){
+    /*
+        
+    CONSIDERACIONES:
+        TRATAR DE ABREVIAR LO MENOS POSIBLE
+        NOMBRAR FUNCIONES/SUBRUTINAS CON LOS NOMBRES MÁS EXACTOS POSIBLES (NO IMPORTA LONGITUD)
+
+    */
+    char codigoCancion[400][6]; //5 letras mas \0
+    char titulo[400][21];
+    char artista[400][21];
+    char genero[400];
+    int duracion[400];
+    int reproduccionesValidas[400]; //Reproducciones válidas correspondientes a las 400 canciones
+
+    CARGA(codigoCancion, titulo, artista, genero, duracion, reproduccionesValidas);
+    //CODIGO PARA PROBAR QUE FUNCIONA
+    /*
+    for(int j = 0; j < 400; j++)
+    {
+        printf("Codigo: %s\n", codigoCancion[j]);
+        printf("Titulo: %s\n", titulo[j]);
+        printf("Artista: %s\n", artista[j]);
+        printf("Genero: %c\n", genero[j]);
+        printf("Duracion: %d\n", duracion[j]);
+        printf("Cantidad Rep. Validas: %d\n\n", reproduccionesValidas[j]);
+    }
+    
+    printf("\nCodigo: %s\n", codigoCancion[219]);
+    printf("Cantidad Rep. Validas: %d\n\n", reproduccionesValidas[219]);
+    printf("Codigo: %s\n", codigoCancion[14]);
+    printf("Cantidad Rep. Validas: %d\n\n", reproduccionesValidas[14]);
+    */
+
+    MENU(codigoCancion, titulo, artista, genero, duracion, reproduccionesValidas);
 
     return 0;
 }
