@@ -1,191 +1,58 @@
 #include <stdio.h>
 #include <string.h>
 
-//----------FUNCIONES ENUNCIADO 1----------
+//--------------------FUNCIONES ENUNCIADO 1--------------------
 
-void pedirCodigoCancion(int *codigoCancionBuscado) //se pide el parámetro con el * por 2 razones: 1, solo las subrutinas pueden interactuar con el usuario. Y 2, C asi lo requiere.
+void buscarCancion(char codigo[400][6], char titulo[400][21], char artista[400][21], int duracion[400], char codigoCancionBuscado[6])
 {
-    /*
-    Propósito: Pide la direccion de memoria en donde esta el codigo de la cancion buscado, y escribe en ella lo que el usuario le dice. 
-    */
-    printf("Ingrese el codigo de la cancion que quiere buscar: ");
-    scanf("%d", codigoCancionBuscado);
-}
+    int i = 0;
 
-void validacionOpcionElegida(int *opcionElegida)
-{
-    /*
-    Propósito: Bloquea el avance del programa principal hasta que opcionElegida es una de las 3 opciones válidas.
-    */
-    while(*opcionElegida != 1 && *opcionElegida != 2 && *opcionElegida != 3) //repetir mientras
-        {
-            printf("La opcion ingresada es incorrecta, reintente: ");
-            scanf("%d", opcionElegida);
-        }
-}
-
-void mostrarOpciones()
-{
-    /*
-    Proposito: Imprime en pantalla todas las opciones.
-    */
-    printf("\nMenu de opciones:\n");
-    printf("1. Consultar la duracion de una cancion.\n");
-    printf("2. Calcular el porcentaje de reproducciones abandonadas.\n");
-    printf("3. Salir\n");
-}
-
-void pedirOpcion(int *opcionElegida)
-{
-    /*
-    Propósito: Pide la opcion en el menú y no termina hasta que sea una opción válida (gracias a validacionOpcionElegida).
-    */
-    printf("\nIngrese la opcion deseada: ");
-    scanf("%d", opcionElegida);
-    validacionOpcionElegida(opcionElegida); //La validación dentro de una subrutina, como dijo Javi.
-}
-
-void buscarCancion(FILE *canciones, int codigoCancionBuscado)
-{
-    /*
-    Propósito: Busca el codigo de la cancion: Si existe, imprime el titulo, el artista y el genero; si no, indica que ese codigo no tiene asociado ninguna cancion.
-    */
-
-    if(canciones == NULL) 
-    {//si el archivo no está abierto:
-        canciones = fopen("canciones_cn.txt", "r"); //lo abre
-    }
-
-    fseek(canciones, 0, SEEK_SET); //Si ya lo está: Que vuelva a la primer linea.
-    //Hacer estos 2 pasos es util, porque si el usuario solo quiere calcular el porcentaje u otras opciones, no hace falta que el sistema
-    //cargue en memoria todo el archivo canciones, con sus 400 lineas.
-
-    int codigoCancion, duracion;
-    char titulo[21], artista[21], genero; // "cadena de hasta 20 caracteres" afirma el enunciado
-    int seEncontroCancion = 0; //bandera
-
-    while(!feof(canciones)) // ¿&& seEncontroCancion != 1? así sale del repetir mientras una vez que encontró la cancion buscada
+    while (i < 400 && strcmp(codigo[i], codigoCancionBuscado) != 0) //Buscas el indice que se corresponda, si exsite, con el codigoCancionBuscado.
     {
-        fscanf(canciones ," %d %s %s %c %d", &codigoCancion, titulo, artista, &genero, &duracion);
-        if(codigoCancion == codigoCancionBuscado)
-        {
-            printf("---------------------------------------------------------------------------------------------------\n");
-            printf("El codigo de cancion buscado (%d) tiene asociado las siguientes caracteristicas: \n", codigoCancionBuscado);
-            printf("Titulo: %s\n", titulo);
-            printf("Artista: %s\n", artista);
-            printf("Genero: %c\n", genero);
-            printf("---------------------------------------------------------------------------------------------------");
-            seEncontroCancion = 1;
-        }
+        i++;
     }
 
-    //Se podría separar la parte de la búsqueda de la de mostrar. (Haciendo algo como char tituloEncontrado[21] y que cuando lo encuentre guarde su titulo)
-    if(seEncontroCancion == 0) //si no se encontró:  
+    if(i<400)
     {
         printf("---------------------------------------------------------------------------------------------------\n");
-        printf("El codigo ingresado (%d) no tiene asociada ninguna cancion en el catálogo.\n", codigoCancionBuscado);
-        printf("---------------------------------------------------------------------------------------------------");
+        printf("El codigo de cancion buscado (%s) tiene asociado las siguientes caracteristicas: \n", codigoCancionBuscado);
+        printf("Titulo: %s\n", titulo[i]);
+        printf("Artista: %s\n", artista[i]);
+        printf("Duracion: %d segundos\n", duracion[i]);
+        printf("---------------------------------------------------------------------------------------------------\n");
+    }
+    else
+    {
+        printf("---------------------------------------------------------------------------------------------------\n");
+        printf("El codigo ingresado (%s) no tiene asociada ninguna cancion en el catalogo.\n", codigoCancionBuscado);
+        printf("---------------------------------------------------------------------------------------------------\n");
     }
 }
 
-void mostrarPorcentajeReproduccionesAbandonadas(float porcentajeRepAbandonadas)
+void mostrarPorcentajeAbandonadas(float porcentajeReproduccionesAbandonadas)
 {
     /*
-    Proposito: Imprime en pantalla, si hay, el porcentaje de reproducciones abandonadas, y si no, lo informa.
+    Propósito: Muestra por pantalla el porcentaje calculado previamente en cargarReproduccionesValidas
     */
 
-    if(porcentajeRepAbandonadas == -1)
+    if(porcentajeReproduccionesAbandonadas < 0)
     {
         printf("---------------------------------------------------------------------------------------------------\n");
-        printf("El archivo no posee reproducciones almacenadas en el.\n");
+        printf("El archivo no posee reproducciones.\n");
         printf("---------------------------------------------------------------------------------------------------");
     }
     else
     {
         printf("---------------------------------------------------------------------------------------------------\n");
-        printf("El porcentaje de reproducciones abandonadas es de: %% %f\n", porcentajeRepAbandonadas);
+        printf("El porcentaje de reproducciones abandonadas es: %f %%.\n", porcentajeReproduccionesAbandonadas);
         printf("---------------------------------------------------------------------------------------------------");
     }
 }
 
-float calcularPorcentajeAbandonadas(FILE *reproducciones)
-{
-    /*
-    Propósito: Recorre reproducciones_cn.txt, contabiliza la cantidad de reproducciones y de reproducciones abandonadas, y devuelve el porcentaje.
-    */
 
-    reproducciones = fopen("reproducciones_cn.txt", "r"); //abrimos el archivo
-    int codigoCancion;
-    char pais[3];
-    int dia, mes, segundosEscuchados;
-    char dispositivo;
+//--------------------FUNCIONES ENUNCIADO 2 y 3--------------------
 
-    int cancionesTotales = 0, reproduccionesAbandonadas = 0;
-
-    while(!feof(reproducciones))
-    {
-        fscanf(reproducciones, " %d %s %d %d %d %c", &codigoCancion, pais, &dia, &mes, &segundosEscuchados, &dispositivo);
-        if(segundosEscuchados < 30) //Las reproducciones consideradas abandonadas son aquellas que duran menos de 30 segundos.
-        {
-            reproduccionesAbandonadas++;
-        }
-        cancionesTotales++;
-    }
-
-    cancionesTotales--; //Esto es porque cuenta a la última linea como una canción (cuando es solo un \0) entonces la decrementamos en 1.
-
-    fclose(reproducciones); //En un futuro, lo optimo sería abrir el archivo reproducciones.txt 1 sola vez y leerlo entero para completar todos los enunciados.
-
-    if(cancionesTotales == 0)
-    {
-        return -1; //indica que no tiene canciones
-    }
-    else
-    {
-        return (reproduccionesAbandonadas * 1.0 / cancionesTotales * 1.0) * 100; //devuelve el porcentaje
-    }
-}
-
-void MENU(char codigoCancion[400][6], char titulo[400][21], char artista[400][21], char genero[400], int duracion[400], int reproduccionesValidas[400])
-{
-    int opcionElegida;
-
-    mostrarOpciones(); //Primero mostramos las opciones
-    pedirOpcion(&opcionElegida); //Despues pedimos y validamos. 
-    
-    while(opcionElegida != 3) //Repetir mientras <> 3 (el usuario no quiera salir)
-    { 
-        switch(opcionElegida) //Segun sea
-        {
-            case 1: 
-            {
-                
-                int codigoCancionBuscado;
-                pedirCodigoCancion(&codigoCancionBuscado); //La subrutina pedirCodigoCancion interactua con el usuario, y guarda eso en codigoCancionBuscado.
-                //buscarCancion(canciones, codigoCancionBuscado); ADAPTAR AL NUEVO FORMATO
-                break;
-                
-            }
-            case 2:
-            {
-                //float porcentajeRepAbandonadas = calcularPorcentajeAbandonadas(reproducciones); ADAPTAR AL NUEVO FORMATO
-                //mostrarPorcentajeReproduccionesAbandonadas(porcentajeRepAbandonadas); ADAPTAR AL NUEVO FORMATO
-                break;
-            }
-            case 3:
-            {
-                break;
-            }
-        }
-
-        mostrarOpciones(); //Escribir
-        pedirOpcion(&opcionElegida); //Leer (garantizamos que se pueda salir del bucle).
-    }
-}
-
-//----------FUNCIONES ENUNCIADO 2----------
-
-void cargarCanciones(char codigoCancion[400][6], char titulo[400][21], char artista[400][21], char genero[400], int duracion[400])
+void cargarCanciones(char codigoCancion[400][6], char titulo[400][21], char artista[400][21], int duracion[400])
 {
     /*
     Proposito: Lee el archivo canciones.txt, y devuelve, por referencia, los arreglos con los respectivos datos cargados.
@@ -193,21 +60,24 @@ void cargarCanciones(char codigoCancion[400][6], char titulo[400][21], char arti
     FILE *canciones;
     canciones = fopen("canciones.txt", "r"); //abrimos canciones.txt y obtenemos la información útil
     int i = 0;
+    char genero;
 
     while(!feof(canciones))
     {
-        fscanf(canciones, "%s %s %s %c %d", codigoCancion[i], titulo[i], artista[i], &genero[i], &duracion[i]);
+        fscanf(canciones, "%s %s %s %c %d", codigoCancion[i], titulo[i], artista[i], &genero, &duracion[i]);
         i++;
     }
 
     fclose(canciones); //cerramos canciones.txt
 }
 
-void cargarReproduccionesValidas(char codigoCancion[400][6], int reproduccionesValidas[400])
+void cargarReproduccionesValidas(char codigoCancion[400][6], int reproduccionesValidas[400], float *porcentajeReproduccionesAbandonadas)
 {
     /*
-    Proposito: Lee el archivo reproducciones.txt, y devuelve, por referencia, el arreglo reproduccionesValidas con los respectivos datos cargados.
+    Proposito: Lee el archivo reproducciones.txt, y devuelve, por referencia, el arreglo reproduccionesValidas con los respectivos datos cargados
+    asi como tambien cuenta la cantidad de reproducciones, las reproducciones abandonadas, y devuelve el porcentaje de las mismas sobre el total.
     */
+
     FILE *reproducciones;
     reproducciones = fopen("reproducciones.txt", "r");
     char codigoCancionReproduccion[6]; //5 caracteres mas \0
@@ -216,6 +86,11 @@ void cargarReproduccionesValidas(char codigoCancion[400][6], int reproduccionesV
     int mesReproduccion;
     int segundosEscuchados;
     char dispositivoReproduccion;
+
+    int cantidadReproduccionesAbandonadas = 0;
+    int cantidadReproducciones = -1;
+    //Se resta 1 porque se cuenta a la ultima linea (que esta vacia) como una reproduccion más.
+    //Ademas, si no hay reproducciones es un valor bandera que nos indica justamente eso.
 
     while(!feof(reproducciones))
     {
@@ -230,18 +105,86 @@ void cargarReproduccionesValidas(char codigoCancion[400][6], int reproduccionesV
             }
             reproduccionesValidas[i]++; //Sumas una reproduccion válida
         }
+        else
+        {
+            cantidadReproduccionesAbandonadas++;
+        }
+        cantidadReproducciones++;
     }
+    cantidadReproducciones--; //Se resta 1 porque se cuenta a la ultima linea (que esta vacia) como una reproduccion más.
+    *porcentajeReproduccionesAbandonadas = (cantidadReproduccionesAbandonadas * 1.0 / cantidadReproducciones * 1.0) * 100;
 
     fclose(reproducciones);
 }
 
-void CARGA(char codigoCancion[400][6], char titulo[400][21], char artista[400][21], char genero[400], int duracion[400], int reproduccionesValidas[400])
+void diezCancionesMasReproducidas(char codigodecaciones[400][6], int reproduccionesvalidas[400], char topdiez[10][6]){
+    int aux;
+    char aux2[6];
+
+    for(int i = 0; i < 399;i++)
+    {
+        for(int j=0;j<399-i;j++)
+        {
+            if(reproduccionesvalidas[j]<reproduccionesvalidas[j+1]){
+                //ordeno reproducciones validas
+                aux=reproduccionesvalidas[j];
+                reproduccionesvalidas[j]=reproduccionesvalidas[j+1];
+                reproduccionesvalidas[j+1]=aux;
+                //ordeno el arreglo de los codigosdecaciones
+                strcpy(aux2, codigodecaciones[j]);
+                strcpy(codigodecaciones[j], codigodecaciones[j+1]);
+                strcpy(codigodecaciones[j+1], aux2);
+            }
+        }
+    }
+
+    for(int l=0;l<10;l++)
+    {
+        strcpy(topdiez[l],codigodecaciones[l]); //Obtenes los 10 codigos que pertenecientes a las canciones con más reproducciones
+    }
+}
+
+void obtenerTop10Canciones(char codigoCancion[400][6], int reproduccionesValidas[400], int top10Canciones[10])
+{
+    /*
+    Proposito: Ordena de mayor a menor una copia de los arreglos apareados, y devuelve una lista con los indices de las 10 canciones con mas reproducciones
+    */
+
+    char codigoTopDiezCanciones[10][6];
+    char codigoCancionesCopia[400][6];
+    int reproduccionesValidasCopia[400];
+
+    for(int i = 0; i < 400; i++)
+    {
+        strcpy(codigoCancionesCopia[i], codigoCancion[i]); //Copiamos codigoCancion para pasarlo por valor y no por referencia.
+    }
+    for(int i = 0; i < 400; i++)
+    {
+        reproduccionesValidasCopia[i] = reproduccionesValidas[i]; //Copiamos reproduccionesValidas para pasarlo por valor y no por referencia.
+    }
+    
+    diezCancionesMasReproducidas(codigoCancionesCopia, reproduccionesValidasCopia, codigoTopDiezCanciones);
+
+    int j;
+    for(int i = 0; i < 10; i++)
+    {
+        j = 0;
+        while(strcmp(codigoCancion[j], codigoTopDiezCanciones[i]) != 0)
+        {
+            j++;
+        }
+        top10Canciones[i] = j; //Le asignás el indice que contiene a ese codigo, que es uno de las 10 canciones con más reproducciones.
+    }
+    
+}
+
+void CARGA(char codigoCancion[400][6], char titulo[400][21], char artista[400][21], int duracion[400], int reproduccionesValidas[400], int top10Canciones[10], float *porcentajeReproduccionesAbandonadas)
 {
     /*
     Propósito: Lee los archivos 1 vez y recopila, a través de arreglos apareados, todos los datos necesarios para la resolución del problema.
     */
 
-    cargarCanciones(codigoCancion, titulo, artista, genero, duracion); 
+    cargarCanciones(codigoCancion, titulo, artista, duracion); 
     //Cargas, a traves de una subrutina auxiliar, cada uno de los codigos, titulos, artista, genero y duracion de todas las canciones
 
     for(int i = 0; i < 400; i++)
@@ -250,45 +193,132 @@ void CARGA(char codigoCancion[400][6], char titulo[400][21], char artista[400][2
         //Inicializamos en 0 todo el arreglo que contiene las reproducciones validas, porque puede ser que haya canciones que no tengan reproducciones válidas.
     }
 
-    cargarReproduccionesValidas(codigoCancion, reproduccionesValidas);
+    cargarReproduccionesValidas(codigoCancion, reproduccionesValidas, porcentajeReproduccionesAbandonadas);
     //Cargas, a traves de una subrutina auxiliar, las reproducciones validas de cada cancion en el indice respectivo.
+
+    obtenerTop10Canciones(codigoCancion, reproduccionesValidas, top10Canciones);
 }
 
-int main(){
-    /*
-        
-    CONSIDERACIONES:
-        TRATAR DE ABREVIAR LO MENOS POSIBLE
-        NOMBRAR FUNCIONES/SUBRUTINAS CON LOS NOMBRES MÁS EXACTOS POSIBLES (NO IMPORTA LONGITUD)
+//--------------------FUNCION MENU Y AUXILIARES--------------------
 
+void pedirCodigoCancion(char codigoCancionBuscado[6])
+{
+    /*
+    Propósito: Pide la direccion de memoria en donde esta el codigo de la cancion buscado, y escribe en ella lo que el usuario le dice. 
     */
+    printf("Ingrese el codigo de la cancion que quiere buscar: ");
+    scanf("%s", codigoCancionBuscado);
+}
+
+void validacionOpcionElegida(int *opcionElegida)
+{
+    /*
+    Propósito: Bloquea el avance del programa principal hasta que opcionElegida es una de las 3 opciones válidas.
+    */
+
+    while(*opcionElegida < 1 || *opcionElegida > 5) //repetir mientras
+        {
+            printf("La opcion ingresada es incorrecta, reintente: ");
+            scanf("%d", opcionElegida);
+        }
+}
+
+void mostrarOpciones()
+{
+    /*
+    Proposito: Imprime en pantalla todas las opciones.
+    */
+    printf("\nMenu de opciones:\n");
+    printf("1. Consultar la duracion de una cancion.\n");
+    printf("2. Calcular el porcentaje de reproducciones abandonadas.\n");
+    printf("3. Mostrar 10 canciones con más reproducciones.\n");
+    printf("4. Mostrar el pais con mas regalias.\n");
+    printf("5. Salir.\n");
+}
+
+void pedirOpcion(int *opcionElegida)
+{
+    /*
+    Propósito: Pide la opcion en el menú y no termina hasta que sea una opción válida (gracias a validacionOpcionElegida).
+    */
+    printf("\nIngrese la opcion deseada: ");
+    scanf("%d", opcionElegida);
+    validacionOpcionElegida(opcionElegida); //La validación dentro de una subrutina, como dijo Javi.
+}
+
+void mostrarTop10Canciones(int top10Canciones[10], char titulo[400][21], char artista[400][21], int reproduccionesValidas[400])
+{
+    printf("---------------------------------------------------------------------------------------------------\n");
+    for(int i = 0; i < 10; i++)
+    {
+        printf("%d. %s - %s : %d reproducciones.\n", i+1, titulo[top10Canciones[i]], artista[top10Canciones[i]], reproduccionesValidas[top10Canciones[i]]);
+    }
+    printf("---------------------------------------------------------------------------------------------------");
+}
+
+void MENU(char codigoCancion[400][6], char titulo[400][21], char artista[400][21], int duracion[400], int reproduccionesValidas[400], int top10Canciones[10], float porcentajeReproduccionesAbandonadas)
+{
+    /*
+    Proposito: Se encarga de interactuar con el usuario y guiar el curso del programa.
+    */
+    int opcionElegida;
+
+    mostrarOpciones(); //Primero mostramos las opciones
+    pedirOpcion(&opcionElegida); //Despues pedimos y validamos. 
+    
+    while(opcionElegida != 5) //Repetir mientras <> 5 (el usuario no quiera salir)
+    { 
+        switch(opcionElegida) //Segun sea
+        {
+            case 1: 
+            {
+                
+                char codigoCancionBuscado[6];
+                pedirCodigoCancion(codigoCancionBuscado); //La subrutina pedirCodigoCancion interactua con el usuario, y guarda eso en codigoCancionBuscado.
+                buscarCancion(codigoCancion, titulo, artista, duracion, codigoCancionBuscado);
+                break;
+                
+            }
+            case 2:
+            {
+                mostrarPorcentajeAbandonadas(porcentajeReproduccionesAbandonadas);
+                break;
+            }
+            case 3:
+            {
+                mostrarTop10Canciones(top10Canciones, titulo, artista, reproduccionesValidas);
+                break;
+            }
+            case 4:
+            {
+                //EJERCICIO 4
+                break;
+            }
+            case 5:
+            {
+                break; //Si la opcion es la 5, sale. Nunca se da este caso, su unico proposito es esclarecer la logica del codigo.
+            }
+        }
+
+        mostrarOpciones(); //Escribir
+        pedirOpcion(&opcionElegida); //Leer (garantizamos que se pueda salir del bucle).
+    }
+}
+
+
+int main(){
+
     char codigoCancion[400][6]; //5 letras mas \0
     char titulo[400][21];
     char artista[400][21];
-    char genero[400];
     int duracion[400];
     int reproduccionesValidas[400]; //Reproducciones válidas correspondientes a las 400 canciones
+    int top10Canciones[10]; //Un arreglo de enteros, ordenados de mayor a menor, en donde cada uno de sus elementos es el índice de la cancion con mas reproducciones
+    float porcentajeReproduccionesAbandonadas;
 
-    CARGA(codigoCancion, titulo, artista, genero, duracion, reproduccionesValidas);
-    //CODIGO PARA PROBAR QUE FUNCIONA
-    /*
-    for(int j = 0; j < 400; j++)
-    {
-        printf("Codigo: %s\n", codigoCancion[j]);
-        printf("Titulo: %s\n", titulo[j]);
-        printf("Artista: %s\n", artista[j]);
-        printf("Genero: %c\n", genero[j]);
-        printf("Duracion: %d\n", duracion[j]);
-        printf("Cantidad Rep. Validas: %d\n\n", reproduccionesValidas[j]);
-    }
-    
-    printf("\nCodigo: %s\n", codigoCancion[219]);
-    printf("Cantidad Rep. Validas: %d\n\n", reproduccionesValidas[219]);
-    printf("Codigo: %s\n", codigoCancion[14]);
-    printf("Cantidad Rep. Validas: %d\n\n", reproduccionesValidas[14]);
-    */
+    CARGA(codigoCancion, titulo, artista, duracion, reproduccionesValidas, top10Canciones, &porcentajeReproduccionesAbandonadas);
 
-    MENU(codigoCancion, titulo, artista, genero, duracion, reproduccionesValidas);
+    MENU(codigoCancion, titulo, artista, duracion, reproduccionesValidas, top10Canciones, porcentajeReproduccionesAbandonadas);
 
     return 0;
 }
