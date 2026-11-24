@@ -71,7 +71,7 @@ void cargarCanciones(char codigoCancion[400][6], char titulo[400][21], char arti
     fclose(canciones); //cerramos canciones.txt
 }
 
-void cargarReproduccionesValidas(char codigoCancion[400][6], int reproduccionesValidas[400], float *porcentajeReproduccionesAbandonadas)
+void cargarReproduccionesValidas(char codigoCancion[400][6], int reproduccionesValidas[400],int cantidadReproduccionesvalidapais[120], char listapaises[120][3], float *porcentajeReproduccionesAbandonadas)
 {
     /*
     Proposito: Lee el archivo reproducciones.txt, y devuelve, por referencia, el arreglo reproduccionesValidas con los respectivos datos cargados
@@ -100,11 +100,18 @@ void cargarReproduccionesValidas(char codigoCancion[400][6], int reproduccionesV
         {
             int i = 0;
             while(strcmp(codigoCancionReproduccion, codigoCancion[i]) != 0)
-            {   
+            {
                 i++; //Buscas la cancion a la que pertenece la reproduccion, mediante ver en qué indice está en códigoCancion
+
             }
             reproduccionesValidas[i]++; //Sumas una reproduccion válida
-        }
+            //buscar pais
+            int cont=0;
+            while (cont<120 && (strcmp(codigoPaisReproduccion, listapaises[cont]) !=0)){
+                cont=cont+1;
+            }
+            cantidadReproduccionesvalidapais[cont]=cantidadReproduccionesvalidapais[cont]+1;
+            }
         else
         {
             cantidadReproduccionesAbandonadas++;
@@ -162,7 +169,7 @@ void obtenerTop10Canciones(char codigoCancion[400][6], int reproduccionesValidas
     {
         reproduccionesValidasCopia[i] = reproduccionesValidas[i]; //Copiamos reproduccionesValidas para pasarlo por valor y no por referencia.
     }
-    
+
     diezCancionesMasReproducidas(codigoCancionesCopia, reproduccionesValidasCopia, codigoTopDiezCanciones);
 
     int j;
@@ -175,28 +182,49 @@ void obtenerTop10Canciones(char codigoCancion[400][6], int reproduccionesValidas
         }
         top10Canciones[i] = j; //Le asignás el indice que contiene a ese codigo, que es uno de las 10 canciones con más reproducciones.
     }
-    
-}
 
-void CARGA(char codigoCancion[400][6], char titulo[400][21], char artista[400][21], int duracion[400], int reproduccionesValidas[400], int top10Canciones[10], float *porcentajeReproduccionesAbandonadas)
+}
+void cargapaisesyregalias (char listapaises[120][3],float regalia[120],char nombrepaises[120][16]){
+    FILE *paises;
+    int i=0;
+    paises=fopen("paises.txt","r");
+    while(i < 120 && fscanf(paises, "%2s %19s %f", listapaises[i], nombrepaises[i], &regalia[i]) == 3){
+        i=i+1;
+    }
+    fclose(paises);
+}
+void CARGA(char listapaises[120][3],float regalia[120], char codigoCancion[400][6], char titulo[400][21], char artista[400][21], int duracion[400], int reproduccionesValidas[400], int top10Canciones[10], int cantidadReproduccionesvalidapais[120],float regaliascalulada[120], char nombrepaises[120][16], float *porcentajeReproduccionesAbandonadas)
 {
     /*
     Propósito: Lee los archivos 1 vez y recopila, a través de arreglos apareados, todos los datos necesarios para la resolución del problema.
     */
 
-    cargarCanciones(codigoCancion, titulo, artista, duracion); 
+    cargarCanciones(codigoCancion, titulo, artista, duracion);
     //Cargas, a traves de una subrutina auxiliar, cada uno de los codigos, titulos, artista, genero y duracion de todas las canciones
+
+    //Cargamos los paises
+    cargapaisesyregalias(listapaises, regalia, nombrepaises);
 
     for(int i = 0; i < 400; i++)
     {
         reproduccionesValidas[i] = 0;
         //Inicializamos en 0 todo el arreglo que contiene las reproducciones validas, porque puede ser que haya canciones que no tengan reproducciones válidas.
     }
-
-    cargarReproduccionesValidas(codigoCancion, reproduccionesValidas, porcentajeReproduccionesAbandonadas);
+     for(int i = 0; i < 120; i++)
+    {
+        cantidadReproduccionesvalidapais[i] = 0;
+        //Inicializamos en 0 todo el arreglo que contiene las cantidad de reproducciones validad en un pais.
+    }
+    cargarReproduccionesValidas(codigoCancion, reproduccionesValidas, cantidadReproduccionesvalidapais, listapaises, porcentajeReproduccionesAbandonadas);
     //Cargas, a traves de una subrutina auxiliar, las reproducciones validas de cada cancion en el indice respectivo.
-
     obtenerTop10Canciones(codigoCancion, reproduccionesValidas, top10Canciones);
+     for(int i = 0; i < 120; i++)
+    {
+        regaliascalulada[i] = 0;
+    }
+    for(int i = 0; i < 120; i++){
+        regaliascalulada[i]=regalia[i]*cantidadReproduccionesvalidapais[i];
+    }
 }
 
 //--------------------FUNCION MENU Y AUXILIARES--------------------
@@ -204,7 +232,7 @@ void CARGA(char codigoCancion[400][6], char titulo[400][21], char artista[400][2
 void pedirCodigoCancion(char codigoCancionBuscado[6])
 {
     /*
-    Propósito: Pide la direccion de memoria en donde esta el codigo de la cancion buscado, y escribe en ella lo que el usuario le dice. 
+    Propósito: Pide la direccion de memoria en donde esta el codigo de la cancion buscado, y escribe en ella lo que el usuario le dice.
     */
     printf("Ingrese el codigo de la cancion que quiere buscar: ");
     scanf("%s", codigoCancionBuscado);
@@ -256,7 +284,28 @@ void mostrarTop10Canciones(int top10Canciones[10], char titulo[400][21], char ar
     printf("---------------------------------------------------------------------------------------------------");
 }
 
-void MENU(char codigoCancion[400][6], char titulo[400][21], char artista[400][21], int duracion[400], int reproduccionesValidas[400], int top10Canciones[10], float porcentajeReproduccionesAbandonadas)
+void paismaxregalia(float regaliascalulada[120], char nombrepaises[120][16])
+{    
+    int max=0;
+    for(int i = 0;i<119;i++)
+    {
+        if(regaliascalulada[i]>regaliascalulada[max])
+        {
+           max=i;
+        }
+    }
+
+    for(int i = 0;i<119;i++){
+        if(regaliascalulada[i]==regaliascalulada[max])
+        {
+            printf("---------------------------------------------------------------------------------------------------\n");
+            printf("El pais con más regalías es: %s con $%f \n", nombrepaises[i],regaliascalulada[i]);
+            printf("---------------------------------------------------------------------------------------------------\n");
+        }
+    }
+}
+
+void MENU(char codigoCancion[400][6], char titulo[400][21], char artista[400][21], int duracion[400], int reproduccionesValidas[400], int top10Canciones[10],float regaliascalulada[120], char nombrepaises[120][16], float porcentajeReproduccionesAbandonadas)
 {
     /*
     Proposito: Se encarga de interactuar con el usuario y guiar el curso del programa.
@@ -264,20 +313,20 @@ void MENU(char codigoCancion[400][6], char titulo[400][21], char artista[400][21
     int opcionElegida;
 
     mostrarOpciones(); //Primero mostramos las opciones
-    pedirOpcion(&opcionElegida); //Despues pedimos y validamos. 
-    
+    pedirOpcion(&opcionElegida); //Despues pedimos y validamos.
+
     while(opcionElegida != 5) //Repetir mientras <> 5 (el usuario no quiera salir)
-    { 
+    {
         switch(opcionElegida) //Segun sea
         {
-            case 1: 
+            case 1:
             {
-                
+
                 char codigoCancionBuscado[6];
                 pedirCodigoCancion(codigoCancionBuscado); //La subrutina pedirCodigoCancion interactua con el usuario, y guarda eso en codigoCancionBuscado.
                 buscarCancion(codigoCancion, titulo, artista, duracion, codigoCancionBuscado);
                 break;
-                
+
             }
             case 2:
             {
@@ -291,7 +340,7 @@ void MENU(char codigoCancion[400][6], char titulo[400][21], char artista[400][21
             }
             case 4:
             {
-                //EJERCICIO 4
+                paismaxregalia(regaliascalulada, nombrepaises);
                 break;
             }
             case 5:
@@ -311,14 +360,19 @@ int main(){
     char codigoCancion[400][6]; //5 letras mas \0
     char titulo[400][21];
     char artista[400][21];
+    char listapaises[120][3];
+    char nombrepaises[120][16];
     int duracion[400];
     int reproduccionesValidas[400]; //Reproducciones válidas correspondientes a las 400 canciones
+    int cantidadReproduccionesvalidapais[120];
     int top10Canciones[10]; //Un arreglo de enteros, ordenados de mayor a menor, en donde cada uno de sus elementos es el índice de la cancion con mas reproducciones
     float porcentajeReproduccionesAbandonadas;
+    float regalia[120];
+    float regaliascalulada[120];
 
-    CARGA(codigoCancion, titulo, artista, duracion, reproduccionesValidas, top10Canciones, &porcentajeReproduccionesAbandonadas);
-
-    MENU(codigoCancion, titulo, artista, duracion, reproduccionesValidas, top10Canciones, porcentajeReproduccionesAbandonadas);
+    CARGA(listapaises, regalia, codigoCancion, titulo, artista, duracion, reproduccionesValidas, top10Canciones, cantidadReproduccionesvalidapais, regaliascalulada, nombrepaises, &porcentajeReproduccionesAbandonadas);
+    
+    MENU(codigoCancion, titulo, artista, duracion, reproduccionesValidas, top10Canciones, regaliascalulada, nombrepaises, porcentajeReproduccionesAbandonadas);
 
     return 0;
 }
